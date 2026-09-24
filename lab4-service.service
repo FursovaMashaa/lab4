@@ -1,0 +1,14 @@
+[Unit]
+Description=Lab4 HTTP Service
+After=network.target
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/lab4-service/html
+ExecStart=/opt/lab4-service/service.sh
+Restart=always
+RestartSec=5
+Environment=PORT=8000
+[Install]
+WantedBy=multi-user.target
