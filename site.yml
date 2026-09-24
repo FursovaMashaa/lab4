@@ -1,0 +1,58 @@
+- name: Deploy Lab4
+  hosts: lab4
+  become: true
+  vars:
+    svc_dir: /opt/lab4-service
+    html_dir: /opt/lab4-service/html
+  tasks:
+    - name: Install packages
+      ansible.builtin.apt:
+        name: [python3, curl, git]
+        state: present
+        update_cache: true
+    - name: Create directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: "0755"
+      loop: ["{{ svc_dir }}", "{{ html_dir }}"]
+    - name: Deploy index.html
+      ansible.builtin.copy:
+        dest: "{{ html_dir }}/index.html"
+        owner: www-data
+        group: www-data
+        mode: "0644"
+        content: |
+          <!DOCTYPE html><html><body>
+          <h1>Fursova M.A.</h1>
+          </body></html>
+    - name: Deploy service.sh
+      ansible.builtin.copy:
+        src: service.sh
+        dest: "{{ svc_dir }}/service.sh"
+        owner: www-data
+        group: www-data
+        mode: "0755"
+    - name: Deploy systemd unit
+      ansible.builtin.copy:
+        src: lab4-service.service
+        dest: /etc/systemd/system/lab4-service.service
+        owner: root
+        group: root
+        mode: "0644"
+    - name: Enable and start service
+      ansible.builtin.systemd:
+        name: lab4-service
+        state: started
+        enabled: true
+        daemon_reload: true
+    - name: Healthcheck
+      ansible.builtin.uri:
+        url: http://127.0.0.1:8000/
+        status_code: 200
+      register: hc_result
+    - name: Show healthcheck status
+      ansible.builtin.debug:
+        msg: "OK: Status {{hc_result.status}}"
